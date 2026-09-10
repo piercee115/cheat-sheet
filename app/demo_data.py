@@ -1,4 +1,3 @@
-from typing import List
 from app.models import SteamGame
 
 # Sample demo libraries showcasing diverse anti-cheat compatibility states

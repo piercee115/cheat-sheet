@@ -11,16 +11,6 @@ from app.config import settings
 
 logger = logging.getLogger("cheatsheet.protondb")
 
-# Tier weighting for sorting
-TIER_PRIORITY = {
-    "platinum": 1,
-    "gold": 2,
-    "silver": 3,
-    "bronze": 4,
-    "borked": 5,
-    "pending": 6,
-}
-
 
 class ProtonDBCache:
     """

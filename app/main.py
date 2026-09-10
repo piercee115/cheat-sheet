@@ -3,7 +3,9 @@ import hashlib
 import hmac
 import logging
 import secrets
+import threading
 import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
@@ -26,7 +28,6 @@ from app.models import (
 )
 from app.steam import (
     InvalidAPIKeyError,
-    PrivateProfileError,
     ProfileNotFoundError,
     get_owned_games,
     get_player_summary,
@@ -73,9 +74,6 @@ app.add_middleware(
 
 
 # Rate limiting & Anti-Bot protection storage
-import threading
-from collections import defaultdict
-
 _rate_limits: defaultdict = defaultdict(list)
 _rate_lock = threading.Lock()
 RATE_LIMIT_WINDOW_SECS = 60.0

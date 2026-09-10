@@ -20,11 +20,6 @@ class ProfileNotFoundError(SteamAPIError):
     pass
 
 
-class PrivateProfileError(SteamAPIError):
-    """Raised when profile game details are private."""
-    pass
-
-
 class InvalidAPIKeyError(SteamAPIError):
     """Raised when Steam Web API key is missing, unauthorized, or invalid."""
     pass

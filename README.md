@@ -1,150 +1,112 @@
-# 🛡️ Cheatsheet: Steam Anti-Cheat Compatibility Checker
+# 🎮 Cheatsheet: Steam Anti-Cheat Compatibility Checker
 
-A high-performance, ultra-lightweight web application that cross-references a user's Steam library with the [Are We Anti-Cheat Yet?](https://areweanticheatyet.com) database. Designed for Linux and Steam Deck gamers to instantly identify which games run out of the box, require proton tweaks, or are blocked by invasive anti-cheat systems.
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-1.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
+> Check which games in your Steam library run on Linux via Proton and which are blocked by kernel anti-cheat engines (Easy Anti-Cheat, BattlEye, Vanguard, Ricochet).
 
-## ⚡ Key Features
-
-- **Sub-Millisecond In-Memory Index:** Thread-safe O(1) hash map index keyed by Steam App ID, eliminating external database bottlenecks during scans.
-- **Automated 12-Hour TTL Background Worker:** Periodically checks and syncs upstream updates from AreWeAntiCheatYet with an atomic swap.
-- **Zero-Friction Universal Input:** Single input field auto-detects 17-digit SteamID64s, full Steam community URLs, custom vanity URLs, and raw profile handles.
-- **Instant Client-Side Filtering:** Real-time debounced search (150ms) and multi-status category toggles (Supported, Running, Broken, Denied, Unlisted) executing entirely in the browser with 0ms network latency.
-- **Plain-Language Privacy Recovery:** Clear step-by-step guidance for users with private Steam profiles on how to set Game Details to Public.
-- **Zero-Config Demo Mode:** Pre-loaded realistic sample libraries (Competitive Gamer, Steam Deck Favorites) allow immediate exploration even without a Steam API key.
-- **Data Export:** Instant one-click export of scanned compatibility reports to JSON or CSV.
+🌐 **Live App:** [cheatsheet.bowieslab.xyz](https://cheatsheet.bowieslab.xyz)
 
 ---
 
-## 🚀 Quick Start (Single-Command Deployment)
+## ✨ Features
 
-### Option 1: Docker Compose (Recommended)
-
-Clone the repository and run:
-
-```bash
-docker compose up -d --build
-```
-
-The application will be live at `http://localhost:8000`.
-
-To view logs or stop:
-```bash
-docker compose logs -f
-docker compose down
-```
-
-### Option 2: Local Deployment & Systemd Service (`./deploy.sh`)
-
-If running outside Docker on Linux:
-
-```bash
-# Automated setup and start as a background daemon
-./deploy.sh start
-
-# Check status and health
-./deploy.sh status
-
-# View live service logs
-./deploy.sh logs
-
-# Stop background service
-./deploy.sh stop
-```
-
-To run interactively in foreground development mode:
-```bash
-./deploy.sh run
-```
-
-To install as a persistent user `systemd` unit:
-```bash
-./deploy.sh install-service
-```
+- 🔍 **Universal Profile Input:** Paste your full Steam profile link, custom vanity URL (`/id/yourname`), or 17-digit SteamID64.
+- 🛡️ **Anti-Cheat Engine Breakdown:** Instantly identifies kernel-level anti-cheat systems (BattlEye, Easy Anti-Cheat, Vanguard, nProtect, etc.) and native Linux support.
+- 🥇 **ProtonDB Tier Integration:** Displays ProtonDB community ratings (Platinum, Gold, Silver, Bronze, Borked) alongside anti-cheat verdicts.
+- 📋 **Community Notes & Timeline:** View verified launch options, community workaround guides, and historical developer status updates.
+- ⚡ **Real-Time Client-Side Filtering:** Search, toggle status pills, and sort table columns by clicking headers with zero latency.
+- 🔒 **Privacy-First:** Reads publicly available Steam data only. No login required, no tracking cookies, and no passwords stored.
+- 💾 **Export Reports:** One-click export of your library's compatibility summary to JSON or CSV.
 
 ---
 
-## ⚙️ Configuration & Environment Variables
+## 🚀 Quick Start with Docker
 
-Copy `.env.example` to `.env`:
+The easiest way to self-host Cheatsheet is with Docker Compose.
 
+### 1. Clone the repository
+```bash
+git clone https://github.com/piercee115/cheatsheet.git
+cd cheatsheet
+```
+
+### 2. Configure your Steam API key
 ```bash
 cp .env.example .env
 ```
+Open `.env` and add your free Steam Web API key:
+```env
+STEAM_API_KEY="your_api_key_here"
+```
+*(Get a free key in seconds at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)).*
+
+### 3. Start the container
+```bash
+docker compose up -d
+```
+Visit **`http://localhost:8000`** in your browser.
+
+To stop or view logs:
+```bash
+docker compose logs -f    # View logs
+docker compose down       # Stop container
+```
+
+---
+
+## ⚙️ Configuration
+
+Set these variables in your `.env` file or Docker environment:
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
-| `STEAM_API_KEY` | `""` | Steam Web API Key from [Valve](https://steamcommunity.com/dev/apikey). *(Optional for Demo Mode)* |
+| `STEAM_API_KEY` | `""` | Steam Web API Key ([Get one here](https://steamcommunity.com/dev/apikey)). *Optional for demo mode.* |
 | `PORT` | `8000` | Port for web server binding. |
-| `HOST` | `0.0.0.0` | Host interface address. |
-| `CACHE_TTL_HOURS`| `3` | Background worker refresh interval for AWACY `games.json`. |
-| `AWACY_DATABASE_URL` | Upstream GitHub | Upstream URL for `games.json`. |
-
-### Getting a Free Steam API Key
-1. Visit [https://steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey).
-2. Log in with your Steam account and enter a domain name (e.g. `localhost`).
-3. Copy the generated key and place it in your `.env` file:
-   ```env
-   STEAM_API_KEY="YOUR_KEY_HERE"
-   ```
+| `CACHE_TTL_HOURS` | `3` | Background auto-sync interval for upstream [AWACY](https://areweanticheatyet.com) data. |
 
 ---
 
-## 🔧 Architecture Overview
+## 🛠️ Non-Docker Setup (Optional)
 
-```
-cheatsheet/
-├── app/
-│   ├── main.py            # FastAPI routes, lifespan manager, security headers
-│   ├── config.py          # Pydantic Settings & environment handling
-│   ├── cache.py           # Thread-safe in-memory O(1) hash map & 12h background worker
-│   ├── steam.py           # Universal input parser & Steam Web API client
-│   ├── models.py          # Pydantic data schemas & enums
-│   ├── demo_data.py       # Realistic sample profile fixtures
-│   ├── templates/         # Server-rendered Jinja2 HTML templates
-│   │   ├── base.html      # Responsive base layout with Tailwind CDN
-│   │   └── index.html     # Interactive dashboard with real-time UI
-│   └── static/
-│       ├── css/app.css    # Custom transitions, badges, and scrollbars
-│       └── js/app.js      # Debounced client-side filtering, sorting, export
-├── data/
-│   └── seed_games.json    # Seed snapshot for instant 0ms offline boot
-├── tests/                 # Automated pytest test suite
-├── Dockerfile             # Multi-stage minimal production image (non-root)
-├── docker-compose.yml     # Compose file with healthchecks & persistent volume
-├── deploy.sh              # Local dependency manager & systemd unit controller
-├── requirements.txt       # Production dependencies
-└── requirements-dev.txt   # Development & test dependencies
-```
-
----
-
-## 🌐 API Reference
-
-- **`GET /`**: Serves the web interface.
-- **`GET /api/scan?query={query}`**: Resolves Steam identifier, queries user library, and returns anti-cheat compatibility report.
-- **`GET /api/demo?profile={competitive|steamdeck}`**: Returns sample pre-loaded profile.
-- **`GET /api/health`**: Healthcheck endpoint for Docker/systemd (`status: healthy`).
-- **`GET /api/db/status`**: In-memory cache statistics and status breakdown.
-- **`POST /api/db/refresh`**: Triggers immediate asynchronous sync with upstream AWACY database.
-
----
-
-## 🧪 Automated Testing
-
-Execute the test suite using `deploy.sh` or `pytest`:
+If running directly on Linux without Docker:
 
 ```bash
-./deploy.sh test
-# Or directly:
-.venv/bin/pytest tests/ -v
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+```
+
+Or use the included helper script:
+```bash
+./deploy.sh start    # Start background daemon
+./deploy.sh status   # Check status
+./deploy.sh stop     # Stop daemon
 ```
 
 ---
 
-## 🔒 Security
+## 🧪 Testing
 
-- Built with strict input sanitization preventing SSRF, command injection, and open redirect vectors.
-- Runs as non-root unprivileged user (`appuser:appgroup`, UID 10001) in Docker.
-- Includes HTTP security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and restricted `Permissions-Policy`.
-- Zero database injection surface (in-memory hash maps with pydantic type enforcement).
+Run the automated test suite with `pytest`:
+
+```bash
+pytest tests/ -v
+```
+
+---
+
+## ⚖️ Legal & Privacy Notice
+
+- **Powered by Steam:** This application uses the Steam Web API but is not endorsed, certified, or affiliated with Valve Corporation. Steam and the Steam logo are trademarks of Valve Corporation.
+- **Powered by AWACY & ProtonDB:** Compatibility data is gathered from the open-source community at [Are We Anti-Cheat Yet?](https://areweanticheatyet.com) and [ProtonDB](https://www.protondb.com).
+- **Privacy:** Only publicly accessible Steam profile information is queried on demand. No personal data or credentials are ever stored.
+
+---
+
+## 📄 License
+
+Distributed under the [MIT License](LICENSE). Contributions, bug reports, and suggestions are welcome!

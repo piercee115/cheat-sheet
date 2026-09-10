@@ -1,8 +1,7 @@
 import pytest
 from starlette.testclient import TestClient
 from app.main import app
-from app.protondb import ProtonDBCache, protondb_cache
-from pathlib import Path
+from app.protondb import protondb_cache
 
 
 @pytest.fixture(scope="module", autouse=True)
