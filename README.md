@@ -1,4 +1,4 @@
-# 🎮 Cheatsheet: Steam Anti-Cheat Compatibility Checker
+# Cheatsheet: Steam Anti-Cheat Compatibility Checker
 
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -11,7 +11,7 @@
 
 ---
 
-## ✨ Features
+## Features
 
 **Universal Profile Input:** Paste your full Steam profile link, custom vanity URL (`/id/yourname`), or 17-digit SteamID64.
 **Anti-Cheat Engine Breakdown:** Instantly identifies kernel-level anti-cheat systems (BattlEye, Easy Anti-Cheat, Vanguard, nProtect, etc.) and native Linux support.
@@ -28,28 +28,36 @@ Quick Start with Docker
 The easiest way to self-host Cheatsheet is with Docker Compose.
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/piercee115/cheatsheet.git
 cd cheatsheet
 ```
 
 ### 2. Configure your Steam API key
+
 ```bash
 cp .env.example .env
 ```
+
 Open `.env` and add your free Steam Web API key:
+
 ```env
 STEAM_API_KEY="your_api_key_here"
 ```
-*(Get a free key in seconds at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)).*
+
+_(Get a free key in seconds at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey))._
 
 ### 3. Start the container
+
 ```bash
 docker compose up -d
 ```
+
 Visit **`http://localhost:8000`** in your browser.
 
 To stop or view logs:
+
 ```bash
 docker compose logs -f    # View logs
 docker compose down       # Stop container
@@ -61,11 +69,11 @@ docker compose down       # Stop container
 
 Set these variables in your `.env` file or Docker environment:
 
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `STEAM_API_KEY` | `""` | Steam Web API Key ([Get one here](https://steamcommunity.com/dev/apikey)). *Optional for demo mode.* |
-| `PORT` | `8000` | Port for web server binding. |
-| `CACHE_TTL_HOURS` | `3` | Background auto-sync interval for upstream [AWACY](https://areweanticheatyet.com) data. |
+| Variable          | Default | Description                                                                                          |
+| :---------------- | :------ | :--------------------------------------------------------------------------------------------------- |
+| `STEAM_API_KEY`   | `""`    | Steam Web API Key ([Get one here](https://steamcommunity.com/dev/apikey)). _Optional for demo mode._ |
+| `PORT`            | `8000`  | Port for web server binding.                                                                         |
+| `CACHE_TTL_HOURS` | `3`     | Background auto-sync interval for upstream [AWACY](https://areweanticheatyet.com) data.              |
 
 ---
 
@@ -81,6 +89,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 ```
 
 Or use the included helper script:
+
 ```bash
 ./deploy.sh start    # Start background daemon
 ./deploy.sh status   # Check status
