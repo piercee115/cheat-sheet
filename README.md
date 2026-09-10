@@ -7,23 +7,23 @@
 
 > Check which games in your Steam library run on Linux via Proton and which are blocked by kernel anti-cheat engines (Easy Anti-Cheat, BattlEye, Vanguard, Ricochet).
 
-🌐 **Live App:** [cheatsheet.bowieslab.xyz](https://cheatsheet.bowieslab.xyz)
+**Live App:** [cheatsheet.bowieslab.xyz](https://cheatsheet.bowieslab.xyz)
 
 ---
 
 ## ✨ Features
 
-- 🔍 **Universal Profile Input:** Paste your full Steam profile link, custom vanity URL (`/id/yourname`), or 17-digit SteamID64.
-- 🛡️ **Anti-Cheat Engine Breakdown:** Instantly identifies kernel-level anti-cheat systems (BattlEye, Easy Anti-Cheat, Vanguard, nProtect, etc.) and native Linux support.
-- 🥇 **ProtonDB Tier Integration:** Displays ProtonDB community ratings (Platinum, Gold, Silver, Bronze, Borked) alongside anti-cheat verdicts.
-- 📋 **Community Notes & Timeline:** View verified launch options, community workaround guides, and historical developer status updates.
-- ⚡ **Real-Time Client-Side Filtering:** Search, toggle status pills, and sort table columns by clicking headers with zero latency.
-- 🔒 **Privacy-First:** Reads publicly available Steam data only. No login required, no tracking cookies, and no passwords stored.
-- 💾 **Export Reports:** One-click export of your library's compatibility summary to JSON or CSV.
+**Universal Profile Input:** Paste your full Steam profile link, custom vanity URL (`/id/yourname`), or 17-digit SteamID64.
+**Anti-Cheat Engine Breakdown:** Instantly identifies kernel-level anti-cheat systems (BattlEye, Easy Anti-Cheat, Vanguard, nProtect, etc.) and native Linux support.
+**ProtonDB Tier Integration:** Displays ProtonDB community ratings (Platinum, Gold, Silver, Bronze, Borked) alongside anti-cheat verdicts.
+**Community Notes & Timeline:** View verified launch options, community workaround guides, and historical developer status updates.
+**Real-Time Client-Side Filtering:** Search, toggle status pills, and sort table columns by clicking headers with zero latency.
+**Privacy-First:** Reads publicly available Steam data only. No login required, no tracking cookies, and no passwords stored.
+**Export Reports:** One-click export of your library's compatibility summary to JSON or CSV.
 
 ---
 
-## 🚀 Quick Start with Docker
+Quick Start with Docker
 
 The easiest way to self-host Cheatsheet is with Docker Compose.
 
@@ -57,7 +57,7 @@ docker compose down       # Stop container
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Set these variables in your `.env` file or Docker environment:
 
@@ -69,7 +69,7 @@ Set these variables in your `.env` file or Docker environment:
 
 ---
 
-## 🛠️ Non-Docker Setup (Optional)
+## Non-Docker Setup (Optional)
 
 If running directly on Linux without Docker:
 
@@ -89,7 +89,7 @@ Or use the included helper script:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run the automated test suite with `pytest`:
 
@@ -99,7 +99,7 @@ pytest tests/ -v
 
 ---
 
-## ⚖️ Legal & Privacy Notice
+## Legal & Privacy Notice
 
 - **Powered by Steam:** This application uses the Steam Web API but is not endorsed, certified, or affiliated with Valve Corporation. Steam and the Steam logo are trademarks of Valve Corporation.
 - **Powered by AWACY & ProtonDB:** Compatibility data is gathered from the open-source community at [Are We Anti-Cheat Yet?](https://areweanticheatyet.com) and [ProtonDB](https://www.protondb.com).
@@ -107,6 +107,6 @@ pytest tests/ -v
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the [MIT License](LICENSE). Contributions, bug reports, and suggestions are welcome!
