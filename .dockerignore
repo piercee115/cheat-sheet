@@ -1,0 +1,38 @@
+# Secrets and environment
+.env
+.env.*
+!.env.example
+
+# Git and development
+.git/
+.gitignore
+.github/
+
+# Virtual environments and dependencies
+.venv/
+venv/
+env/
+
+# Python cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# Logs and local artifacts
+*.log
+*.pid
+cheatsheet.pid
+cheatsheet.log
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

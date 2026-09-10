@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+
+{% block title %}Steam Anti-Cheat Compatibility | Linux & Ubuntu Migration Tool{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-6xl mx-auto">
+    <!-- Utility Search Panel -->
+    <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-6 shadow-sm">
+        <div class="max-w-2xl">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2 h-2 rounded-full bg-[#e95420]"></span>
+                <span class="text-xs uppercase tracking-wider font-semibold text-[#8b949e]">Ubuntu & Linux Migration Index</span>
+            </div>
+            <h1 class="text-2xl font-bold text-[#f0f6fc] tracking-tight">
+                Steam Library Anti-Cheat Checker
+            </h1>
+            <p class="text-sm text-[#8b949e] mt-1.5 leading-relaxed">
+                Check which games in your Steam library run on Linux via Proton and which are blocked by kernel-level anti-cheat engines (Easy Anti-Cheat, BattlEye, Vanguard, etc.).
+            </p>
+        </div>
+
+        <!-- Universal Search Form -->
+        <form id="scan-form" onsubmit="handleScan(event); return false;" class="mt-5 max-w-2xl">
+            <div class="flex flex-col sm:flex-row gap-2">
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6e7681]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input
+                        type="text"
+                        id="steam-input"
+                        name="query"
+                        placeholder="Paste Steam profile URL, custom ID, or 17-digit SteamID64..."
+                        class="w-full pl-9 pr-3 py-2.5 bg-[#0d1117] border border-[#30363d] rounded-lg text-sm text-[#f0f6fc] placeholder-[#6e7681] focus:outline-none focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] transition font-mono"
+                        required
+                        autocomplete="off"
+                    >
+                    <!-- Anti-bot honeypot and verification token -->
+                    <input type="text" name="b_check" id="bot-honeypot" tabindex="-1" autocomplete="off" class="hidden absolute -left-[9999px]" aria-hidden="true">
+                    <input type="hidden" id="anti-bot-token" value="{{ anti_bot_token }}">
+                </div>
+                <button
+                    type="submit"
+                    id="scan-button"
+                    class="px-5 py-2.5 bg-[#238636] hover:bg-[#2ea043] text-white font-medium rounded-lg text-sm transition flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.98] disabled:opacity-50"
+                >
+                    <span id="button-spinner" class="hidden">
+                        <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                    </span>
+                    <span id="button-text">Check Library</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Quick Sample Profiles & Help -->
+        <div class="mt-4 pt-4 border-t border-[#21262d] flex flex-wrap items-center justify-between gap-3 text-xs text-[#8b949e]">
+            <div class="flex items-center gap-2">
+                <span class="text-[#6e7681]">Try sample libraries:</span>
+                <button onclick="loadDemo('competitive')" class="px-2 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition">
+                    Competitive Multiplayer
+                </button>
+                <button onclick="loadDemo('steamdeck')" class="px-2 py-1 rounded bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] border border-[#30363d] transition">
+                    Steam Deck Favorites
+                </button>
+            </div>
+            <button onclick="showPrivacyHelpModal()" class="text-[#58a6ff] hover:underline flex items-center gap-1">
+                <span>Where do I find my Steam ID?</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert / Status Notice -->
+    <div id="alert-banner" class="hidden rounded-lg border p-4 text-xs transition">
+        <div class="flex items-start gap-3">
+            <div id="alert-icon" class="text-base flex-shrink-0"></div>
+            <div class="flex-grow">
+                <h3 id="alert-title" class="font-semibold text-sm"></h3>
+                <p id="alert-message" class="text-[#8b949e] mt-1"></p>
+                <div id="alert-actions" class="mt-2.5 flex gap-2"></div>
+            </div>
+            <button onclick="dismissAlert()" class="text-[#8b949e] hover:text-[#f0f6fc]">✕</button>
+        </div>
+    </div>
+
+    <!-- Private Profile Step-by-Step Instructions -->
+    <div id="privacy-callout" class="hidden rounded-xl bg-[#161b22] border border-[#d29922]/40 p-5 space-y-4">
+        <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-[#d29922]/10 border border-[#d29922]/30 flex items-center justify-center text-[#d29922] flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3V9a2 2 0 00-2-2h-1V5a4 4 0 00-8 0v2H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2z"></path></svg>
+            </div>
+            <div>
+                <h2 class="text-sm font-semibold text-[#f0f6fc]">Steam Profile Game Details are Set to Private</h2>
+                <p class="text-xs text-[#8b949e] mt-0.5">
+                    Valve keeps game libraries private by default. To check anti-cheat compatibility, set your Game details to Public:
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]">
+                <span class="font-mono text-[#e95420] text-[11px] block font-semibold mb-1">01. PROFILE</span>
+                Open your Steam profile page and click <span class="text-[#f0f6fc] font-medium">"Edit Profile"</span>.
+            </div>
+            <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]">
+                <span class="font-mono text-[#e95420] text-[11px] block font-semibold mb-1">02. PRIVACY</span>
+                Click the <span class="text-[#f0f6fc] font-medium">"Privacy Settings"</span> tab on the sidebar.
+            </div>
+            <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]">
+                <span class="font-mono text-[#e95420] text-[11px] block font-semibold mb-1">03. VISIBILITY</span>
+                Set <span class="text-[#2ea043] font-medium">"Game details"</span> to <span class="text-[#2ea043] font-medium">"Public"</span>.
+            </div>
+            <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d] flex flex-col justify-between">
+                <div>
+                    <span class="font-mono text-[#e95420] text-[11px] block font-semibold mb-1">04. RECHECK</span>
+                    Wait a few seconds for Steam servers to update, then:
+                </div>
+                <button onclick="retryLastScan()" class="mt-2 w-full py-1.5 bg-[#238636] hover:bg-[#2ea043] text-white font-medium rounded text-xs transition">
+                    Retry Scan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan Results Dashboard (Rendered when scanned) -->
+    <div id="results-section" class="hidden space-y-5">
+        <!-- Overview & Statistics Bar -->
+        <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-5 shadow-sm">
+            <!-- User Profile Summary Row -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <img id="user-avatar" src="" alt="Avatar" class="w-12 h-12 rounded-lg border border-[#30363d] bg-[#0d1117] object-cover">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 id="user-name" class="text-base font-bold text-[#f0f6fc]"></h2>
+                            <span id="demo-indicator" class="hidden text-[11px] px-1.5 py-0.2 rounded bg-[#1f6feb]/20 text-[#58a6ff] border border-[#1f6feb]/40 font-mono">Sample</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-[#8b949e] mt-0.5">
+                            <span id="user-steamid" class="font-mono text-[11px]"></span>
+                            <span>&bull;</span>
+                            <a id="user-profile-link" href="#" target="_blank" class="hover:text-[#58a6ff] transition inline-flex items-center gap-0.5">
+                                <span>Steam Profile</span>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Data Buttons -->
+                <div class="flex items-center gap-2 self-stretch sm:self-auto text-xs">
+                    <button onclick="exportData('json')" class="flex-1 sm:flex-none px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] rounded-lg border border-[#30363d] transition flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#8b949e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>JSON</span>
+                    </button>
+                    <button onclick="exportData('csv')" class="flex-1 sm:flex-none px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] rounded-lg border border-[#30363d] transition flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#8b949e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>CSV</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Compact Metrics Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-2">
+                <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d]">
+                    <span class="text-[11px] text-[#8b949e] block font-medium">Total Games</span>
+                    <span id="stat-total" class="text-xl font-bold text-[#f0f6fc] font-mono">0</span>
+                </div>
+                <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d] cursor-pointer hover:border-[#2ea043] transition" onclick="selectStatusFilter('Supported')">
+                    <div class="flex items-center gap-1.5 text-[11px] text-[#2ea043] font-medium">
+                        <span class="w-2 h-2 rounded-full bg-[#2ea043]"></span>
+                        <span>Supported</span>
+                    </div>
+                    <span id="stat-supported" class="text-xl font-bold text-[#2ea043] font-mono">0</span>
+                </div>
+                <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d] cursor-pointer hover:border-[#1f6feb] transition" onclick="selectStatusFilter('Running')">
+                    <div class="flex items-center gap-1.5 text-[11px] text-[#58a6ff] font-medium">
+                        <span class="w-2 h-2 rounded-full bg-[#1f6feb]"></span>
+                        <span>Running</span>
+                    </div>
+                    <span id="stat-running" class="text-xl font-bold text-[#58a6ff] font-mono">0</span>
+                </div>
+                <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d] cursor-pointer hover:border-[#d29922] transition" onclick="selectStatusFilter('Broken')">
+                    <div class="flex items-center gap-1.5 text-[11px] text-[#d29922] font-medium">
+                        <span class="w-2 h-2 rounded-full bg-[#d29922]"></span>
+                        <span>Broken</span>
+                    </div>
+                    <span id="stat-broken" class="text-xl font-bold text-[#d29922] font-mono">0</span>
+                </div>
+                <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d] cursor-pointer hover:border-[#f85149] transition" onclick="selectStatusFilter('Denied')">
+                    <div class="flex items-center gap-1.5 text-[11px] text-[#f85149] font-medium">
+                        <span class="w-2 h-2 rounded-full bg-[#f85149]"></span>
+                        <span>Denied</span>
+                    </div>
+                    <span id="stat-denied" class="text-xl font-bold text-[#f85149] font-mono">0</span>
+                </div>
+                <div class="bg-[#0d1117] p-3 rounded-lg border border-[#21262d] cursor-pointer hover:border-[#8b949e] transition" onclick="selectStatusFilter('Unlisted')">
+                    <div class="flex items-center gap-1.5 text-[11px] text-[#8b949e] font-medium">
+                        <span class="w-2 h-2 rounded-full bg-[#8b949e]"></span>
+                        <span>Unlisted</span>
+                    </div>
+                    <span id="stat-unlisted" class="text-xl font-bold text-[#c9d1d9] font-mono">0</span>
+                </div>
+            </div>
+
+            <!-- Proportional Compatibility Progress Bar -->
+            <div class="space-y-1.5 pt-1">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-[#8b949e]">Linux Anti-Cheat Playability (Supported + Running + Clean):</span>
+                    <span id="playability-rate" class="font-bold text-[#2ea043] font-mono">0%</span>
+                </div>
+                <div class="w-full h-2 bg-[#21262d] rounded-full overflow-hidden flex">
+                    <div id="bar-supported" class="bg-[#2ea043] transition-all duration-300" style="width: 0%" title="Supported"></div>
+                    <div id="bar-running" class="bg-[#1f6feb] transition-all duration-300" style="width: 0%" title="Running"></div>
+                    <div id="bar-planned" class="bg-[#a371f7] transition-all duration-300" style="width: 0%" title="Planned"></div>
+                    <div id="bar-broken" class="bg-[#d29922] transition-all duration-300" style="width: 0%" title="Broken"></div>
+                    <div id="bar-denied" class="bg-[#f85149] transition-all duration-300" style="width: 0%" title="Denied"></div>
+                    <div id="bar-unlisted" class="bg-[#484f58] transition-all duration-300" style="width: 0%" title="Unlisted"></div>
+                </div>
+            </div>
+
+            <!-- ProtonDB Community Rating Summary Bar -->
+            <div class="pt-3 border-t border-[#21262d] flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[11px] text-[#8b949e] font-mono uppercase tracking-wider font-semibold">ProtonDB Ratings:</span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span onclick="selectProtonDBFilter('platinum')" class="px-2 py-0.5 rounded text-[11px] font-mono protondb-badge-platinum cursor-pointer hover:opacity-80 transition" title="Filter by Platinum">
+                            Platinum: <span id="stat-pdb-platinum" class="font-bold">0</span>
+                        </span>
+                        <span onclick="selectProtonDBFilter('gold')" class="px-2 py-0.5 rounded text-[11px] font-mono protondb-badge-gold cursor-pointer hover:opacity-80 transition" title="Filter by Gold">
+                            Gold: <span id="stat-pdb-gold" class="font-bold">0</span>
+                        </span>
+                        <span onclick="selectProtonDBFilter('silver')" class="px-2 py-0.5 rounded text-[11px] font-mono protondb-badge-silver cursor-pointer hover:opacity-80 transition" title="Filter by Silver">
+                            Silver: <span id="stat-pdb-silver" class="font-bold">0</span>
+                        </span>
+                        <span onclick="selectProtonDBFilter('bronze')" class="px-2 py-0.5 rounded text-[11px] font-mono protondb-badge-bronze cursor-pointer hover:opacity-80 transition" title="Filter by Bronze">
+                            Bronze: <span id="stat-pdb-bronze" class="font-bold">0</span>
+                        </span>
+                        <span onclick="selectProtonDBFilter('borked')" class="px-2 py-0.5 rounded text-[11px] font-mono protondb-badge-borked cursor-pointer hover:opacity-80 transition" title="Filter by Borked">
+                            Borked: <span id="stat-pdb-borked" class="font-bold">0</span>
+                        </span>
+                        <span onclick="selectProtonDBFilter('pending')" class="px-2 py-0.5 rounded text-[11px] font-mono protondb-badge-pending cursor-pointer hover:opacity-80 transition" title="Filter by Pending">
+                            Pending: <span id="stat-pdb-pending" class="font-bold">0</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="text-[11px] text-[#8b949e]">
+                    Crowdsourced from <a href="https://www.protondb.com" target="_blank" rel="noopener noreferrer" class="text-[#58a6ff] hover:underline">ProtonDB</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Search Controls Bar -->
+        <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-3.5 space-y-3 sticky top-16 z-30 shadow-sm">
+            <!-- Filter Pills Row -->
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                    <button onclick="selectStatusFilter('ALL')" id="pill-all" class="status-pill active-pill px-2.5 py-1 rounded text-xs font-medium transition">
+                        All (<span id="pill-all-count">0</span>)
+                    </button>
+                    <button onclick="selectStatusFilter('Supported')" id="pill-supported" class="status-pill px-2.5 py-1 rounded text-xs font-medium transition bg-[#21262d] text-[#2ea043] hover:bg-[#30363d]">
+                        Supported (<span id="pill-supported-count">0</span>)
+                    </button>
+                    <button onclick="selectStatusFilter('Running')" id="pill-running" class="status-pill px-2.5 py-1 rounded text-xs font-medium transition bg-[#21262d] text-[#58a6ff] hover:bg-[#30363d]">
+                        Running (<span id="pill-running-count">0</span>)
+                    </button>
+                    <button onclick="selectStatusFilter('Broken')" id="pill-broken" class="status-pill px-2.5 py-1 rounded text-xs font-medium transition bg-[#21262d] text-[#d29922] hover:bg-[#30363d]">
+                        Broken (<span id="pill-broken-count">0</span>)
+                    </button>
+                    <button onclick="selectStatusFilter('Denied')" id="pill-denied" class="status-pill px-2.5 py-1 rounded text-xs font-medium transition bg-[#21262d] text-[#f85149] hover:bg-[#30363d]">
+                        Denied (<span id="pill-denied-count">0</span>)
+                    </button>
+                    <button onclick="selectStatusFilter('Unlisted')" id="pill-unlisted" class="status-pill px-2.5 py-1 rounded text-xs font-medium transition bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]">
+                        Unlisted (<span id="pill-unlisted-count">0</span>)
+                    </button>
+                </div>
+
+                <!-- View Mode Switcher: Cards vs Table -->
+                <div class="flex items-center bg-[#0d1117] p-0.5 rounded-lg border border-[#30363d] text-xs">
+                    <button id="view-mode-table" onclick="setViewMode('table')" class="px-2.5 py-1 rounded font-medium text-[#c9d1d9] bg-[#21262d] transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 6h18M3 18h18"></path></svg>
+                        <span>Table</span>
+                    </button>
+                    <button id="view-mode-cards" onclick="setViewMode('cards')" class="px-2.5 py-1 rounded font-medium text-[#8b949e] hover:text-[#c9d1d9] transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        <span>Cards</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instant Search & Secondary Filters -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
+                <div class="sm:col-span-3 relative">
+                    <input
+                        type="text"
+                        id="client-search"
+                        oninput="onSearchInput(event)"
+                        placeholder="Search title, anti-cheat, or AppID..."
+                        class="w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-xs text-[#f0f6fc] placeholder-[#6e7681] focus:border-[#58a6ff] focus:outline-none font-mono"
+                    >
+                </div>
+                <div class="sm:col-span-3">
+                    <select id="anticheat-filter" onchange="onAntiCheatFilterChange(event)" class="w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-xs text-[#c9d1d9] focus:outline-none">
+                        <option value="">All Anti-Cheat Systems</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <select id="protondb-filter" onchange="onProtonDBFilterChange(event)" class="w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-xs text-[#c9d1d9] focus:outline-none">
+                        <option value="">All ProtonDB Tiers</option>
+                        <option value="platinum">Platinum</option>
+                        <option value="gold">Gold</option>
+                        <option value="silver">Silver</option>
+                        <option value="bronze">Bronze</option>
+                        <option value="borked">Borked</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <select id="feature-filter" onchange="onFeatureFilterChange(event)" class="w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-xs text-[#c9d1d9] focus:outline-none">
+                        <option value="">All Features</option>
+                        <option value="has_notes">With Workaround Notes</option>
+                        <option value="has_updates">With Status Timeline</option>
+                        <option value="native_only">Native Linux Only</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <select id="sort-select" onchange="onSortChange(event)" class="w-full px-3 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-xs text-[#c9d1d9] focus:outline-none">
+                        <option value="status_priority">Sort: Problematic First</option>
+                        <option value="status_supported">Sort: Playable First</option>
+                        <option value="protondb_tier">Sort: ProtonDB Tier</option>
+                        <option value="protondb_borked">Sort: ProtonDB Borked</option>
+                        <option value="playtime_desc">Sort: Most Played</option>
+                        <option value="name_asc">Sort: Title (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Showing Result Counter -->
+        <div class="flex items-center justify-between text-xs text-[#8b949e] px-1 font-mono">
+            <span id="filtered-count-text">Showing 0 games</span>
+            <span class="text-[#6e7681]">O(1) in-memory index &bull; Updates every 3h</span>
+        </div>
+
+        <!-- Table View Container -->
+        <div id="table-view-container" class="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-[#0d1117] border-b border-[#30363d] text-[#8b949e] font-mono text-[11px] uppercase select-none">
+                        <tr>
+                            <th class="py-2.5 px-3 cursor-pointer hover:text-[#f0f6fc] transition" onclick="handleColumnSort('status')" title="Sort by Status">
+                                <div class="flex items-center gap-1">
+                                    <span>Status</span>
+                                    <span id="col-sort-status" class="text-[10px] text-[#e95420] font-bold">▲</span>
+                                </div>
+                            </th>
+                            <th class="py-2.5 px-3 cursor-pointer hover:text-[#f0f6fc] transition" onclick="handleColumnSort('protondb')" title="Sort by ProtonDB Tier">
+                                <div class="flex items-center gap-1">
+                                    <span>ProtonDB</span>
+                                    <span id="col-sort-protondb" class="text-[10px] text-[#6e7681]">↕</span>
+                                </div>
+                            </th>
+                            <th class="py-2.5 px-3 cursor-pointer hover:text-[#f0f6fc] transition" onclick="handleColumnSort('name')" title="Sort by Game Title">
+                                <div class="flex items-center gap-1">
+                                    <span>Game Title</span>
+                                    <span id="col-sort-name" class="text-[10px] text-[#6e7681]">↕</span>
+                                </div>
+                            </th>
+                            <th class="py-2.5 px-3 cursor-pointer hover:text-[#f0f6fc] transition" onclick="handleColumnSort('anticheats')" title="Sort by Anti-Cheat Engine">
+                                <div class="flex items-center gap-1">
+                                    <span>Anti-Cheat Engine</span>
+                                    <span id="col-sort-anticheats" class="text-[10px] text-[#6e7681]">↕</span>
+                                </div>
+                            </th>
+                            <th class="py-2.5 px-3 cursor-pointer hover:text-[#f0f6fc] transition" onclick="handleColumnSort('native')" title="Sort by Native Linux Support">
+                                <div class="flex items-center gap-1">
+                                    <span>Native</span>
+                                    <span id="col-sort-native" class="text-[10px] text-[#6e7681]">↕</span>
+                                </div>
+                            </th>
+                            <th class="py-2.5 px-3 cursor-pointer hover:text-[#f0f6fc] transition" onclick="handleColumnSort('notes')" title="Sort by Workarounds & Timeline Updates Count">
+                                <div class="flex items-center gap-1">
+                                    <span>Notes & Updates</span>
+                                    <span id="col-sort-notes" class="text-[10px] text-[#6e7681]">↕</span>
+                                </div>
+                            </th>
+                            <th class="py-2.5 px-3 cursor-pointer hover:text-[#f0f6fc] transition" onclick="handleColumnSort('playtime')" title="Sort by Playtime Hours">
+                                <div class="flex items-center gap-1">
+                                    <span>Playtime</span>
+                                    <span id="col-sort-playtime" class="text-[10px] text-[#6e7681]">↕</span>
+                                </div>
+                            </th>
+                            <th class="py-2.5 px-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="games-table-body" class="divide-y divide-[#21262d]"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Cards Grid Container (Hidden by default in favor of Table view) -->
+        <div id="cards-view-container" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+
+        <!-- Empty Filter State -->
+        <div id="empty-state" class="hidden text-center py-12 bg-[#161b22] rounded-xl border border-[#30363d] space-y-2">
+            <h3 class="text-sm font-semibold text-[#f0f6fc]">No matching games found</h3>
+            <p class="text-xs text-[#8b949e] max-w-sm mx-auto">Try clearing search text or switching status category.</p>
+            <button onclick="resetFilters()" class="px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-xs text-[#c9d1d9] rounded border border-[#30363d] transition">
+                Reset Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Comprehensive Game Detail & Workarounds/Timeline Modal -->
+<div id="game-detail-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto cursor-pointer" onclick="handleModalBackdropClick(event, 'game-detail-modal')">
+    <div class="bg-[#161b22] border border-[#30363d] rounded-xl max-w-2xl w-full my-8 overflow-hidden shadow-2xl flex flex-col max-h-[90vh] cursor-default" onclick="event.stopPropagation()">
+        <!-- Header Image & Game Banner -->
+        <div class="relative h-32 sm:h-40 w-full bg-[#0d1117] overflow-hidden flex-shrink-0 border-b border-[#21262d]">
+            <img id="modal-game-header" src="" alt="" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#161b22] via-[#161b22]/40 to-transparent"></div>
+            
+            <button onclick="closeGameDetailModal()" class="absolute top-3 right-3 w-8 h-8 rounded-lg bg-[#0d1117]/80 hover:bg-[#21262d] border border-[#30363d] text-[#c9d1d9] flex items-center justify-center transition">
+                ✕
+            </button>
+
+            <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span id="modal-status-badge" class="px-2 py-0.5 rounded text-xs font-semibold font-mono shadow"></span>
+                        <span id="modal-protondb-badge" class="px-2 py-0.5 rounded text-xs font-semibold font-mono shadow"></span>
+                    </div>
+                    <h2 id="modal-game-title" class="text-base sm:text-lg font-bold text-[#f0f6fc] tracking-tight"></h2>
+                    <span id="modal-appid-text" class="text-[11px] text-[#8b949e] font-mono"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scrollable Modal Body -->
+        <div class="p-5 overflow-y-auto space-y-5 text-xs">
+            <!-- Key Metadata Strip -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="bg-[#0d1117] p-2.5 rounded-lg border border-[#21262d]">
+                    <span class="text-[10px] text-[#8b949e] font-mono uppercase block">Anti-Cheat Engine</span>
+                    <span id="modal-anticheats" class="font-semibold text-[#f0f6fc] text-xs">None</span>
+                </div>
+                <div class="bg-[#0d1117] p-2.5 rounded-lg border border-[#21262d]">
+                    <span class="text-[10px] text-[#8b949e] font-mono uppercase block">Linux Execution</span>
+                    <span id="modal-native-status" class="font-semibold text-[#2ea043] text-xs">Proton</span>
+                </div>
+                <div class="bg-[#0d1117] p-2.5 rounded-lg border border-[#21262d]">
+                    <span class="text-[10px] text-[#8b949e] font-mono uppercase block">ProtonDB Score</span>
+                    <span id="modal-protondb-score" class="font-semibold text-[#ffd700] text-xs">—</span>
+                </div>
+                <div class="bg-[#0d1117] p-2.5 rounded-lg border border-[#21262d]">
+                    <span class="text-[10px] text-[#8b949e] font-mono uppercase block">AWACY Updated</span>
+                    <span id="modal-date-changed" class="font-semibold text-[#8b949e] text-xs">—</span>
+                </div>
+            </div>
+
+            <!-- Notes & Workarounds Section -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-[#f0f6fc] flex items-center gap-1.5 text-xs uppercase tracking-wide">
+                        <svg class="w-3.5 h-3.5 text-[#58a6ff]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Community Notes & Workarounds</span>
+                    </h3>
+                    <span id="modal-notes-count" class="text-[11px] text-[#8b949e] font-mono">0 notes</span>
+                </div>
+                <div id="modal-notes-container" class="space-y-2"></div>
+            </div>
+
+            <!-- Anti-Cheat Status Updates & Timeline History -->
+            <div class="space-y-2 pt-2 border-t border-[#21262d]">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-[#f0f6fc] flex items-center gap-1.5 text-xs uppercase tracking-wide">
+                        <svg class="w-3.5 h-3.5 text-[#bc8cff]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Anti-Cheat Status History & Timeline</span>
+                    </h3>
+                    <span id="modal-updates-count" class="text-[11px] text-[#8b949e] font-mono">0 events</span>
+                </div>
+                <div id="modal-updates-container" class="space-y-3"></div>
+            </div>
+
+            <!-- Quick References & Links -->
+            <div class="pt-2 border-t border-[#21262d] space-y-2">
+                <h3 class="font-bold text-[#f0f6fc] text-xs uppercase tracking-wide">Reference & External Links</h3>
+                <div id="modal-links-container" class="flex flex-wrap gap-2 text-xs"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-3 bg-[#0d1117] border-t border-[#21262d] flex justify-between items-center text-xs">
+            <span class="text-[#8b949e] text-[11px]">Data cross-referenced with AreWeAntiCheatYet & ProtonDB</span>
+            <button onclick="closeGameDetailModal()" class="px-4 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] rounded border border-[#30363d] transition font-medium">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Anti-Cheat Updates & News Feed Modal -->
+<div id="recent-updates-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto cursor-pointer" onclick="handleModalBackdropClick(event, 'recent-updates-modal')">
+    <div class="bg-[#161b22] border border-[#30363d] rounded-xl max-w-2xl w-full my-8 overflow-hidden shadow-2xl flex flex-col max-h-[90vh] cursor-default" onclick="event.stopPropagation()">
+        <div class="p-4 border-b border-[#21262d] flex justify-between items-center bg-[#0d1117]">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#e95420]"></span>
+                <h3 class="text-sm font-bold text-[#f0f6fc]">Live Anti-Cheat Status Feed & Community Timeline</h3>
+            </div>
+            <button onclick="closeRecentUpdatesModal()" class="text-[#8b949e] hover:text-[#f0f6fc]">✕</button>
+        </div>
+        <div class="p-4 overflow-y-auto space-y-3 text-xs flex-grow" id="recent-updates-list">
+            <div class="text-center py-6 text-[#8b949e]">Loading latest anti-cheat updates...</div>
+        </div>
+        <div class="p-3 bg-[#0d1117] border-t border-[#21262d] flex justify-between items-center text-xs">
+            <span class="text-[#8b949e] text-[11px]">Chronological reports tracked by AreWeAntiCheatYet</span>
+            <button onclick="closeRecentUpdatesModal()" class="px-4 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] rounded border border-[#30363d] transition font-medium">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- How To Find Steam ID Help Modal -->
+<div id="privacy-help-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer" onclick="handleModalBackdropClick(event, 'privacy-help-modal')">
+    <div class="bg-[#161b22] border border-[#30363d] rounded-xl max-w-md w-full p-5 space-y-4 shadow-xl cursor-default" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center border-b border-[#21262d] pb-3">
+            <h3 class="text-sm font-bold text-[#f0f6fc] flex items-center gap-2">
+                <span>Steam Profile Identifier Guide</span>
+            </h3>
+            <button onclick="closePrivacyHelpModal()" class="text-[#8b949e] hover:text-[#f0f6fc]">✕</button>
+        </div>
+        <div class="space-y-2.5 text-xs text-[#8b949e]">
+            <p>You can paste any of the following formats directly into the search bar:</p>
+            <div class="space-y-2">
+                <div class="p-2.5 bg-[#0d1117] rounded border border-[#21262d]">
+                    <strong class="text-[#f0f6fc] block font-mono text-[11px] mb-0.5">Profile URL</strong>
+                    <code class="text-[#2ea043] font-mono text-[11px]">https://steamcommunity.com/id/username/</code>
+                </div>
+                <div class="p-2.5 bg-[#0d1117] rounded border border-[#21262d]">
+                    <strong class="text-[#f0f6fc] block font-mono text-[11px] mb-0.5">Numeric Profile URL</strong>
+                    <code class="text-[#58a6ff] font-mono text-[11px]">https://steamcommunity.com/profiles/76561198012345678</code>
+                </div>
+                <div class="p-2.5 bg-[#0d1117] rounded border border-[#21262d]">
+                    <strong class="text-[#f0f6fc] block font-mono text-[11px] mb-0.5">Custom ID / Vanity Name</strong>
+                    <code class="text-[#d29922] font-mono text-[11px]">username</code>
+                </div>
+                <div class="p-2.5 bg-[#0d1117] rounded border border-[#21262d]">
+                    <strong class="text-[#f0f6fc] block font-mono text-[11px] mb-0.5">Raw 17-digit SteamID64</strong>
+                    <code class="text-[#a371f7] font-mono text-[11px]">76561198012345678</code>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end pt-1">
+            <button onclick="closePrivacyHelpModal()" class="px-3.5 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-xs font-medium rounded text-white transition">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/app.js?v={{ version | default('2.0') }}"></script>
+{% endblock %}

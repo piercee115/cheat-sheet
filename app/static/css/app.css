@@ -1,0 +1,115 @@
+/* Cheatsheet: Linux & Steam Deck Anti-Cheat Theme */
+
+/* Active filter pill */
+.active-pill {
+    background-color: #238636 !important;
+    color: #ffffff !important;
+    border-color: #2ea043 !important;
+}
+
+/* Custom compact scrollbars */
+.scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
+}
+
+/* Game card subtle hover */
+.game-card {
+    transition: border-color 0.12s ease-in-out, background-color 0.12s ease-in-out;
+}
+.game-card:hover {
+    border-color: #58a6ff;
+}
+
+/* Table row subtle hover */
+.game-row {
+    transition: background-color 0.1s ease-in-out;
+}
+.game-row:hover {
+    background-color: #21262d;
+}
+
+/* Clean, high-contrast status badges */
+.status-badge-Supported {
+    background-color: rgba(46, 160, 67, 0.15);
+    color: #3fb950;
+    border: 1px solid rgba(46, 160, 67, 0.4);
+}
+
+.status-badge-Running {
+    background-color: rgba(31, 111, 235, 0.15);
+    color: #58a6ff;
+    border: 1px solid rgba(31, 111, 235, 0.4);
+}
+
+.status-badge-Broken {
+    background-color: rgba(210, 153, 34, 0.15);
+    color: #d29922;
+    border: 1px solid rgba(210, 153, 34, 0.4);
+}
+
+.status-badge-Denied {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.4);
+}
+
+.status-badge-Planned {
+    background-color: rgba(163, 113, 247, 0.15);
+    color: #bc8cff;
+    border: 1px solid rgba(163, 113, 247, 0.4);
+}
+
+.status-badge-Unlisted {
+    background-color: rgba(110, 118, 129, 0.12);
+    color: #8b949e;
+    border: 1px solid rgba(110, 118, 129, 0.3);
+}
+
+/* ProtonDB Compatibility Tier Badges */
+.protondb-badge-platinum {
+    background-color: rgba(0, 210, 198, 0.15);
+    color: #00d2c6;
+    border: 1px solid rgba(0, 210, 198, 0.4);
+}
+
+.protondb-badge-gold {
+    background-color: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.protondb-badge-silver {
+    background-color: rgba(176, 184, 196, 0.15);
+    color: #b0b8c4;
+    border: 1px solid rgba(176, 184, 196, 0.4);
+}
+
+.protondb-badge-bronze {
+    background-color: rgba(205, 127, 50, 0.15);
+    color: #cd7f32;
+    border: 1px solid rgba(205, 127, 50, 0.4);
+}
+
+.protondb-badge-borked {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.4);
+}
+
+.protondb-badge-pending {
+    background-color: rgba(110, 118, 129, 0.12);
+    color: #8b949e;
+    border: 1px solid rgba(110, 118, 129, 0.3);
+}
+

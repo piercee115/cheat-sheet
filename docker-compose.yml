@@ -1,0 +1,28 @@
+services:
+  cheatsheet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cheatsheet:latest
+    container_name: cheatsheet-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - STEAM_API_KEY=${STEAM_API_KEY:-}
+      - PORT=8000
+      - HOST=0.0.0.0
+      - CACHE_TTL_HOURS=${CACHE_TTL_HOURS:-3}
+      - AWACY_DATABASE_URL=https://raw.githubusercontent.com/AreWeAntiCheatYet/AreWeAntiCheatYet/master/games.json
+    volumes:
+      - ./data:/app/data
+      - ./app:/app/app:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
